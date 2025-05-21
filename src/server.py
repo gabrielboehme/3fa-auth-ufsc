@@ -1,14 +1,13 @@
 from flask import Flask, request, jsonify, session
 import os
-import hmac
 from db import DatabaseManager
 from utils.crypto import CryptoUtils
 from utils.ip import IPUtils
 from totp import TOTPManager
-from config import AES_KEY_LENGTH, GCM_IV_LENGTH, SCRYPT_DKLEN_KDF # Import SCRYPT_DKLEN_KDF
+from config import SERVER_URL # Import SCRYPT_DKLEN_KDF
 
-ALLOWED_COUNTRIES = ['BR', 'Local']  # Example allowed countries
-ALLOWED_CITIES = ['Local', 'Florianopolis']  # Example allowed countries/cities
+ALLOWED_COUNTRIES = ['BR.upper()', 'LOCAL']  # Example al.upper()lowed countries
+ALLOWED_CITIES = ['LOCAL', 'FLORIANOPOLIS']  # Example allowed countries/cities
 
 app = Flask(__name__)
 # For a local academic project, a simple secret key is fine.
@@ -99,7 +98,7 @@ def authenticate_user():
     if (current_location['country'] != user_data['country'] or
         current_location['city'] != user_data['city']):
         # Special handling for local IPs: if both are loopback, they match
-        if (client_ip in ['127.0.0.1', '::1'] and user_data['country'] in ALLOWED_COUNTRIES and user_data['city'] in ALLOWED_CITIES):
+        if (client_ip in ['127.0.0.1', '::1'] and user_data['country'].upper() in ALLOWED_COUNTRIES and user_data['city'].upper() in ALLOWED_CITIES):
             print(f"IP Factor: Matched local IP for {username}.")
         else:
             return jsonify({
@@ -219,4 +218,4 @@ if __name__ == '__main__':
     db_manager.create_table()
     print("Server starting on http://127.0.0.1:5001")
     print("WARNING: Flask development server is not suitable for production environments.")
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=SERVER_URL.split(':')[-1]) # Extract port from SERVER_URL

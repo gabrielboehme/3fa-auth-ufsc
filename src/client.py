@@ -1,12 +1,10 @@
 import requests
 import pyotp
-import os
-import base64
 from utils.crypto import CryptoUtils
-from config import AES_KEY_LENGTH, GCM_IV_LENGTH, SCRYPT_DKLEN_KDF
+from config import SERVER_URL
 
 # --- Configuration ---
-SERVER_URL = "http://127.0.0.1:5000"
+
 
 # --- Global variables for client session ---
 # In a real app, these would be managed securely (e.g., encrypted local storage, secure element)

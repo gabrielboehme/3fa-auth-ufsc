@@ -1,7 +1,6 @@
-import os
-
 # --- Database Configuration ---
 DATABASE_NAME = 'auth_system.db'
+SERVER_URL = "http://127.0.0.1:5001"
 
 # --- SCRYPT Parameters for Password Hashing (OWASP recommended) ---
 # N: CPU/memory cost parameter (2^17)
