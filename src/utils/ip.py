@@ -48,33 +48,3 @@ class IPUtils:
         # For a simple local Flask development server, request.remote_addr is usually reliable.
         # In a production environment behind proxies, you might need to check X-Forwarded-For.
         return request.remote_addr
-
-# Example Usage (for testing ip_utils independently)
-if __name__ == '__main__':
-    ip_util = IPUtils()
-
-    # Test with a public IP (example IP from ipinfo.io docs)
-    test_ip_public = "8.8.8.8"
-    print(f"Getting location for public IP: {test_ip_public}")
-    location_public = ip_util.get_location_from_ip(test_ip_public)
-    if location_public:
-        print(f"  Country: {location_public['country']}, City: {location_public['city']}")
-    else:
-        print("  Failed to get location for public IP.")
-
-    # Test with loopback IP
-    test_ip_loopback_ipv4 = "127.0.0.1"
-    print(f"\nGetting location for loopback IPv4: {test_ip_loopback_ipv4}")
-    location_loopback_ipv4 = ip_util.get_location_from_ip(test_ip_loopback_ipv4)
-    if location_loopback_ipv4:
-        print(f"  Country: {location_loopback_ipv4['country']}, City: {location_loopback_ipv4['city']}")
-    else:
-        print("  Failed to get location for loopback IPv4.")
-
-    test_ip_loopback_ipv6 = "::1"
-    print(f"\nGetting location for loopback IPv6: {test_ip_loopback_ipv6}")
-    location_loopback_ipv6 = ip_util.get_location_from_ip(test_ip_loopback_ipv6)
-    if location_loopback_ipv6:
-        print(f"  Country: {location_loopback_ipv6['country']}, City: {location_loopback_ipv6['city']}")
-    else:
-        print("  Failed to get location for loopback IPv6.")
