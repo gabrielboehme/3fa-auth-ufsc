@@ -21,7 +21,7 @@ ip_util = IPUtils()
 # In a real system, this would be managed more robustly (e.g., session-based, short-lived).
 # For this academic project, it acts as a server-side cache for the session key.
 # Keyed by username, stores the derived symmetric key.
-active_session_keys = {}
+ACTIVE_SESSION = {}
 
 
 @app.route('/register', methods=['POST'])
@@ -120,8 +120,6 @@ def authenticate_user():
 
     # All 3 factors passed. User is authenticated.
     # Derive a symmetric key for message encryption/decryption for this session.
-    # The salt for KDF could be fixed, or generated per session. For simplicity and
-    # as per problem statement, we derive it from TOTP.
     # Let's use a dynamic salt for KDF, generated per session, to ensure fresh key derivation.
     # For this project, we'll use the TOTP secret itself as the `secret_material`
     # and a *freshly generated salt* for the KDF to make each derived key unique across sessions.
@@ -137,24 +135,22 @@ def authenticate_user():
         user_data['totp_secret'].encode('utf-8'), # TOTP secret as bytes
         session_kdf_salt
     )
-    
+
     # Store the derived key and its salt in a temporary session-like store on the server.
     # In a real app, this would be part of a proper session management system.
     # We'll store it as a tuple (key, kdf_salt) so the client can retrieve the kdf_salt later
     # for their own key derivation.
-    session['username'] = username # Flask session to keep track of authenticated user
-    session['session_symmetric_key'] = session_symmetric_key.hex() # Store as hex for session
-    session['session_kdf_salt'] = session_kdf_salt.hex() # Store salt as hex
-
-    active_session_keys[username] = {
+    ACTIVE_SESSION.update({
+        "username": username,
         "key": session_symmetric_key,
         "kdf_salt": session_kdf_salt
-    }
+    })
     
     return jsonify({
         "message": "Authentication successful! You can now send encrypted messages.",
         "username": username,
-        "session_kdf_salt": session_kdf_salt.hex() # Send the KDF salt to client for their key derivation
+        "session_kdf_salt": session_kdf_salt.hex(), # Send the KDF salt to client for their key derivation
+        "user_totp_secret": user_data['totp_secret'], # Send the KDF salt to client for their key derivation
     }), 200
 
 @app.route('/send_message', methods=['POST'])
@@ -163,17 +159,17 @@ def send_message():
     Receives an encrypted message from an authenticated user and decrypts it.
     Requires: username, iv, ciphertext, tag, associated_data.
     """
-    if 'username' not in session:
+    data = request.get_json()
+    username = data.get('username')
+    if username != ACTIVE_SESSION["username"]:
+        print("Unauthorized access attempt. No active session.")
         return jsonify({"message": "Unauthorized. Please authenticate first."}), 401
-
-    username = session['username']
     
     # Retrieve the session key for this authenticated user
-    session_data = active_session_keys.get(username)
-    if not session_data or not session_data.get("key"):
+    if not ACTIVE_SESSION or not ACTIVE_SESSION.get("key"):
         return jsonify({"message": "Session key not found. Please re-authenticate."}), 401
 
-    derived_key = session_data["key"]
+    derived_key = ACTIVE_SESSION["key"]
 
     data = request.get_json()
     iv_hex = data.get('iv')
@@ -197,6 +193,7 @@ def send_message():
     if decrypted_message is None:
         return jsonify({"message": "Message decryption failed (authentication tag mismatch or corrupted data)."}), 403
     else:
+        print(f"Decrypted message successfully: '{decrypted_message.decode('utf-8')}'")
         return jsonify({
             "message": "Message received and decrypted successfully!",
             "decrypted_content": decrypted_message.decode('utf-8'),
@@ -207,8 +204,8 @@ def send_message():
 def logout_user():
     """Logs out the user by clearing the session."""
     username = session.pop('username', None)
-    if username and username in active_session_keys:
-        del active_session_keys[username]
+    if username and username in ACTIVE_SESSION:
+        del ACTIVE_SESSION[username]
         return jsonify({"message": f"User '{username}' logged out successfully."}), 200
     return jsonify({"message": "No active session to log out."}), 200
 

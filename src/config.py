@@ -7,7 +7,7 @@ SERVER_URL = "http://127.0.0.1:5001"
 # r: block size parameter (8)
 # p: parallelization parameter (1)
 # Derived key length (e.g., 32 bytes for a strong hash)
-SCRYPT_N_PASSWORD = 2**17
+SCRYPT_N_PASSWORD = 2**6
 SCRYPT_R_PASSWORD = 8
 SCRYPT_P_PASSWORD = 1
 SCRYPT_DKLEN_PASSWORD = 32 # 256 bits

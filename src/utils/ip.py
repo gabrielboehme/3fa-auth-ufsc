@@ -10,8 +10,7 @@ class IPUtils:
     def __init__(self):
         ipinfo_token = os.getenv('IPINFO_API_TOKEN')
         if not ipinfo_token:
-            print("WARNING: IPinfo API token is not configured or is default. Geolocation will not work correctly.")
-            raise ValueError("IPinfo API token is not configured.")
+            raise ValueError("IPinfo API token is not configured in env var IPINFO_API_TOKEN.")
         else:
             self.handler = ipinfo.getHandler(ipinfo_token)
 

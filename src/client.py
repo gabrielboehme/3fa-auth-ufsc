@@ -9,15 +9,15 @@ from config import SERVER_URL
 # --- Global variables for client session ---
 # In a real app, these would be managed securely (e.g., encrypted local storage, secure element)
 # For this academic project, they are in-memory.
-CLIENT_TOTP_SECRET = None
-CLIENT_SESSION_KEY = None
-CLIENT_KDF_SALT = None # The salt received from the server for symmetric key derivation
-AUTHENTICATED_USERNAME = None
+SESSION = {
+    'username': None,
+    'derived_key': None
+}
 
 
 def register():
     """Handles user registration."""
-    global CLIENT_TOTP_SECRET
+    global client_totp_secret
     print("\n--- User Registration ---")
     username = input("Enter desired username: ")
     password = input("Enter password: ")
@@ -34,32 +34,25 @@ def register():
         data = response.json()
         print(f"Server response: {data.get('message')}")
         if response.status_code == 201:
-            CLIENT_TOTP_SECRET = data.get('totp_secret')
-            print(f"Your TOTP Secret: {CLIENT_TOTP_SECRET}")
-            print(f"Provisioning URI: {data.get('provisioning_uri')}")
+            client_totp_secret = data.get('totp_secret')
+            print(f"Your TOTP Secret: {client_totp_secret}")
             print("\nPlease add this TOTP Secret to your authenticator app (e.g., Google Authenticator).")
-            print("It's crucial for the third authentication factor!")
+            print("It's crucial for the third authentication factor!\n")
         else:
             print(f"Error registering: {data.get('message', 'Unknown error')}")
     except requests.exceptions.ConnectionError:
         print("Could not connect to the server. Is it running?")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred while registering user: {e}")
+        raise e
 
 def authenticate():
     """Handles 3FA authentication."""
-    global CLIENT_SESSION_KEY, CLIENT_KDF_SALT, AUTHENTICATED_USERNAME
     print("\n--- User Authentication (3FA) ---")
     username = input("Enter username: ")
     password = input("Enter password: ")
-
     # Get TOTP code from user (assuming they have it in an authenticator app)
-    if CLIENT_TOTP_SECRET:
-        print(f"Generating TOTP code using your secret '{CLIENT_TOTP_SECRET}'...")
-        totp_code = pyotp.TOTP(CLIENT_TOTP_SECRET).now()
-        print(f"Generated TOTP Code (client-side): {totp_code}")
-    else:
-        totp_code = input("Enter TOTP code from your authenticator app: ")
+    totp_code = input("Enter TOTP code from your authenticator app: ")
 
     payload = {
         "username": username,
@@ -72,21 +65,21 @@ def authenticate():
         data = response.json()
         print(f"Server response: {data.get('message')}")
         if response.status_code == 200:
-            AUTHENTICATED_USERNAME = username
-            CLIENT_KDF_SALT = data.get('session_kdf_salt')
-            if CLIENT_KDF_SALT:
+            client_kdf_salt = data.get('session_kdf_salt')
+            if client_kdf_salt:
                 # Client derives the symmetric key using the same secret and salt as the server
                 # In a real scenario, the client would have stored their TOTP secret securely.
-                # For this academic project, we use CLIENT_TOTP_SECRET if it was obtained from registration.
-                if CLIENT_TOTP_SECRET:
+                # For this academic project, we use client_totp_secret if it was obtained from registration.
+                client_totp_secret = data.get('user_totp_secret')
+                if client_totp_secret:
                     client_derived_key = CryptoUtils.derive_symmetric_key(
-                        CLIENT_TOTP_SECRET.encode('utf-8'),
-                        bytes.fromhex(CLIENT_KDF_SALT)
+                        client_totp_secret.encode('utf-8'),
+                        bytes.fromhex(client_kdf_salt)
                     )
-                    CLIENT_SESSION_KEY = client_derived_key
-                    print(f"Client successfully derived session key: {CLIENT_SESSION_KEY.hex()}")
+                    SESSION['username'] = data.get("username")
+                    SESSION['derived_key'] = client_derived_key
                 else:
-                    print("Warning: CLIENT_TOTP_SECRET not available. Cannot derive session key on client.")
+                    raise ValueError("Warning: client_totp_secret not available. Cannot derive session key on client.")
             else:
                 print("Error: Server did not provide session KDF salt.")
         else:
@@ -94,25 +87,28 @@ def authenticate():
     except requests.exceptions.ConnectionError:
         print("Could not connect to the server. Is it running?")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred while athenticating the user: {e}")
+        raise e
 
 def send_encrypted_message():
     """Sends an encrypted message to the server."""
     print("\n--- Send Encrypted Message ---")
-    if not AUTHENTICATED_USERNAME or not CLIENT_SESSION_KEY:
-        print("You must authenticate first to send an encrypted message.")
+    if not SESSION.get("username") or not SESSION.get("derived_key"):
+        print("You must authenticate before sending messages.")
         return
-
+    
     message = input("Enter message to encrypt and send: ")
     
     # Associated Data: Authenticate the sender's username
-    associated_data = AUTHENTICATED_USERNAME.encode('utf-8')
+    associated_data = SESSION["username"].encode('utf-8')
 
     # Encrypt the message using the derived session key
-    iv, ciphertext, tag = CryptoUtils.encrypt_message(CLIENT_SESSION_KEY, message.encode('utf-8'), associated_data)
+    iv, ciphertext, tag = CryptoUtils.encrypt_message(SESSION["derived_key"], message.encode('utf-8'), associated_data)
+
+
 
     payload = {
-        "username": AUTHENTICATED_USERNAME, # Send username for server context
+        "username": SESSION["username"], # Send username for server context
         "iv": iv.hex(),
         "ciphertext": ciphertext.hex(),
         "tag": tag.hex(),
@@ -131,26 +127,8 @@ def send_encrypted_message():
     except requests.exceptions.ConnectionError:
         print("Could not connect to the server. Is it running?")
     except Exception as e:
-        print(f"An error occurred: {e}")
-
-def logout():
-    """Logs out the user."""
-    global CLIENT_TOTP_SECRET, CLIENT_SESSION_KEY, CLIENT_KDF_SALT, AUTHENTICATED_USERNAME
-    try:
-        response = requests.post(f"{SERVER_URL}/logout")
-        data = response.json()
-        print(f"Server response: {data.get('message')}")
-        if response.status_code == 200:
-            CLIENT_TOTP_SECRET = None
-            CLIENT_SESSION_KEY = None
-            CLIENT_KDF_SALT = None
-            AUTHENTICATED_USERNAME = None
-            print("Client-side session cleared.")
-    except requests.exceptions.ConnectionError:
-        print("Could not connect to the server. Is it running?")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
+        print(f"An error occurred while sending message: {e}")
+        raise e
 
 def main_menu():
     """Displays the main menu and handles user choices."""
