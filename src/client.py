@@ -2,7 +2,7 @@ import requests
 import pyotp
 import os
 import base64
-from crypto_utils import CryptoUtils
+from utils.crypto import CryptoUtils
 from config import AES_KEY_LENGTH, GCM_IV_LENGTH, SCRYPT_DKLEN_KDF
 
 # --- Configuration ---

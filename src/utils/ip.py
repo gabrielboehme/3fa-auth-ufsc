@@ -1,15 +1,17 @@
 import ipinfo
 import socket
-from config import IPINFO_API_TOKEN
+import os
+
 
 class IPUtils:
     """
     Handles IP address related functionalities, including geolocation.
     """
-    def __init__(self, ipinfo_token=IPINFO_API_TOKEN):
-        if not ipinfo_token or ipinfo_token == 'YOUR_IPINFO_API_TOKEN':
+    def __init__(self):
+        ipinfo_token = os.getenv('IPINFO_API_TOKEN')
+        if not ipinfo_token:
             print("WARNING: IPinfo API token is not configured or is default. Geolocation will not work correctly.")
-            self.handler = None
+            raise ValueError("IPinfo API token is not configured.")
         else:
             self.handler = ipinfo.getHandler(ipinfo_token)
 
@@ -27,8 +29,7 @@ class IPUtils:
         
         if not self.handler:
             print("IPinfo handler not initialized. Cannot perform geolocation.")
-            return None
-
+            raise Exception("IPinfo handler not initialized. Cannot perform geolocation.")
         try:
             details = self.handler.getDetails(ip_address)
             return {

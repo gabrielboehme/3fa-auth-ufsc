@@ -1,10 +1,5 @@
 import os
 
-# --- IPinfo Configuration ---
-# You need to obtain an API token from ipinfo.io
-# Create a free account and replace 'YOUR_IPINFO_API_TOKEN' with your actual token.
-IPINFO_API_TOKEN = os.getenv('IPINFO_API_TOKEN', 'YOUR_IPINFO_API_TOKEN')
-
 # --- Database Configuration ---
 DATABASE_NAME = 'auth_system.db'
 

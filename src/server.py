@@ -7,6 +7,9 @@ from utils.ip import IPUtils
 from totp import TOTPManager
 from config import AES_KEY_LENGTH, GCM_IV_LENGTH, SCRYPT_DKLEN_KDF # Import SCRYPT_DKLEN_KDF
 
+ALLOWED_COUNTRIES = ['BR', 'Local']  # Example allowed countries
+ALLOWED_CITIES = ['Local', 'Florianopolis']  # Example allowed countries/cities
+
 app = Flask(__name__)
 # For a local academic project, a simple secret key is fine.
 # In production, use a strong, randomly generated key from environment variables.
@@ -96,7 +99,7 @@ def authenticate_user():
     if (current_location['country'] != user_data['country'] or
         current_location['city'] != user_data['city']):
         # Special handling for local IPs: if both are loopback, they match
-        if (client_ip in ['127.0.0.1', '::1'] and user_data['country'] == "Local" and user_data['city'] == "Local"):
+        if (client_ip in ['127.0.0.1', '::1'] and user_data['country'] in ALLOWED_COUNTRIES and user_data['city'] in ALLOWED_CITIES):
             print(f"IP Factor: Matched local IP for {username}.")
         else:
             return jsonify({
@@ -214,6 +217,6 @@ def logout_user():
 if __name__ == '__main__':
     # Ensure the database is initialized
     db_manager.create_table()
-    print("Server starting on http://127.0.0.1:5000")
+    print("Server starting on http://127.0.0.1:5001")
     print("WARNING: Flask development server is not suitable for production environments.")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
