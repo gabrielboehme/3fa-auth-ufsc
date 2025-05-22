@@ -12,6 +12,8 @@ Instalacao:
 Execucao:
 1. Abra 2 sessoes de terminal no diretorio base do projeto (uma pode ser a sessao de instalacao aberta anteriormente)
 2. Em cada uma ative o ambiente virtual (paco 2 da instalacao)
-3. Execute o seguinte comando para iniciar o servidor: python3 src/server.py
+3. Execute os seguintes comando para iniciar o servidor: 
+3.1 export IPINFO_API_TOKEN=<api-token>
+3.2 python3 src/server.py
 4. Execute em seguinda o seguinte comando para iniciar o cliente: python3 src/client.py
 5. Execute a aplicacao pelo menu no terminal.
