@@ -24,3 +24,6 @@ Para cada um dos prompts, digite:
    python3 server.py
     ou
    python3 totp.py
+6. Exportar variavel de ambiente com token
+export IPINFO_API_TOKEN=<valor>
+    
