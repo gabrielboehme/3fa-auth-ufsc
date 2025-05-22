@@ -4,23 +4,17 @@ from db import DatabaseManager
 from utils.crypto import CryptoUtils
 from utils.ip import IPUtils
 from totp import TOTPManager
-from config import SERVER_URL # Import SCRYPT_DKLEN_KDF
+from config import SERVER_URL
 
-ALLOWED_COUNTRIES = ['BR.upper()', 'LOCAL']  # Example al.upper()lowed countries
-ALLOWED_CITIES = ['LOCAL', 'FLORIANOPOLIS']  # Example allowed countries/cities
+ALLOWED_COUNTRIES = ['LOCAL', 'BR'] 
+ALLOWED_CITIES = ['LOCAL', 'FLORIANOPOLIS']
 
 app = Flask(__name__)
-# For a local academic project, a simple secret key is fine.
-# In production, use a strong, randomly generated key from environment variables.
 app.secret_key = os.urandom(24)
 
 db_manager = DatabaseManager()
 ip_util = IPUtils()
 
-# A dictionary to store derived keys for authenticated users.
-# In a real system, this would be managed more robustly (e.g., session-based, short-lived).
-# For this academic project, it acts as a server-side cache for the session key.
-# Keyed by username, stores the derived symmetric key.
 ACTIVE_SESSION = {}
 
 
@@ -58,13 +52,12 @@ def register_user():
 
     if db_manager.add_user(username, hashed_password, password_salt,
                             user_country, user_city, mobile_number, totp_secret):
-        provisioning_uri = TOTPManager.get_provisioning_uri(username, totp_secret)
         return jsonify({
             "message": "User registered successfully. Please add this secret to your authenticator app.",
             "username": username,
             "ip_location": f"{user_city}, {user_country}",
-            "totp_secret": totp_secret, # For display purposes only in local testing
-            "provisioning_uri": provisioning_uri
+            "totp_secret": totp_secret,
+
         }), 201
     else:
         return jsonify({"message": "Registration failed. Username might already exist."}), 409
@@ -118,12 +111,6 @@ def authenticate_user():
         return jsonify({"message": "Authentication failed: Invalid TOTP code."}), 401
     print(f"TOTP Factor: User '{username}' provided valid TOTP code.")
 
-    # All 3 factors passed. User is authenticated.
-    # Derive a symmetric key for message encryption/decryption for this session.
-    # Let's use a dynamic salt for KDF, generated per session, to ensure fresh key derivation.
-    # For this project, we'll use the TOTP secret itself as the `secret_material`
-    # and a *freshly generated salt* for the KDF to make each derived key unique across sessions.
-    # This also aligns with the requirement not to store fixed keys/IVs.
     
     # Generate a salt for key derivation for this *specific session*.
     # This salt is NOT stored; it's used for this session's key derivation only.
@@ -136,10 +123,7 @@ def authenticate_user():
         session_kdf_salt
     )
 
-    # Store the derived key and its salt in a temporary session-like store on the server.
-    # In a real app, this would be part of a proper session management system.
-    # We'll store it as a tuple (key, kdf_salt) so the client can retrieve the kdf_salt later
-    # for their own key derivation.
+    # All 3 factors passed. User is authenticated.
     ACTIVE_SESSION.update({
         "username": username,
         "key": session_symmetric_key,

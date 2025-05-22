@@ -2,21 +2,21 @@
 DATABASE_NAME = 'auth_system.db'
 SERVER_URL = "http://127.0.0.1:5001"
 
-# --- SCRYPT Parameters for Password Hashing (OWASP recommended) ---
-# N: CPU/memory cost parameter (2^17)
-# r: block size parameter (8)
-# p: parallelization parameter (1)
-# Derived key length (e.g., 32 bytes for a strong hash)
-SCRYPT_N_PASSWORD = 2**6
+# --- SCRYPT Parameters for Password Hashing ---
+# N: CPU/memory cost parameter
+# r: block size parameter
+# p: parallelization parameter
+# Derived key length
+SCRYPT_N_PASSWORD = 2**10
 SCRYPT_R_PASSWORD = 8
 SCRYPT_P_PASSWORD = 1
 SCRYPT_DKLEN_PASSWORD = 32 # 256 bits
 
 # --- SCRYPT Parameters for Key Derivation (from TOTP secret) ---
-# N: CPU/memory cost parameter (2^14 for interactive logins)
-# r: block size parameter (8)
-# p: parallelization parameter (1)
-# Derived key length for AES-256 (32 bytes)
+# N: CPU/memory cost parameter
+# r: block size parameter
+# p: parallelization parameter
+# Derived key length for AES-256
 SCRYPT_N_KDF = 2**14
 SCRYPT_R_KDF = 8
 SCRYPT_P_KDF = 1
@@ -25,11 +25,11 @@ SCRYPT_DKLEN_KDF = 32 # 256 bits for AES-256
 # --- TOTP Configuration ---
 # Time step for TOTP in seconds
 TOTP_TIME_STEP = 30
-# Number of allowed time steps for validation (e.g., 1 allows current and 1 before/after)
+# Number of allowed time steps for validation
 TOTP_VALID_WINDOW = 1
 
 # --- AES-GCM Configuration ---
-# AES key length in bytes (256 bits)
+# AES key length in bytes
 AES_KEY_LENGTH = 32
-# GCM IV length in bytes (96 bits recommended)
+# GCM IV length in bytes
 GCM_IV_LENGTH = 12

@@ -1,5 +1,4 @@
 import ipinfo
-import socket
 import os
 
 
@@ -22,8 +21,6 @@ class IPUtils:
         if ip_address in ['127.0.0.1', '::1']:
             # For local testing, treat loopback as "local"
             print(f"Detected loopback IP '{ip_address}'. Treating as local.")
-            # For this academic project, we assume local means the user's registered country/city.
-            # In a real app, you might have a default location or require manual input.
             return {"country": "Local", "city": "Local"} # Placeholder for local
         
         if not self.handler:

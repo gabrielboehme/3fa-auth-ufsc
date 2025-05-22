@@ -1,14 +1,7 @@
 import requests
-import pyotp
 from utils.crypto import CryptoUtils
 from config import SERVER_URL
 
-# --- Configuration ---
-
-
-# --- Global variables for client session ---
-# In a real app, these would be managed securely (e.g., encrypted local storage, secure element)
-# For this academic project, they are in-memory.
 SESSION = {
     'username': None,
     'derived_key': None
@@ -17,7 +10,6 @@ SESSION = {
 
 def register():
     """Handles user registration."""
-    global client_totp_secret
     print("\n--- User Registration ---")
     username = input("Enter desired username: ")
     password = input("Enter password: ")
@@ -68,8 +60,6 @@ def authenticate():
             client_kdf_salt = data.get('session_kdf_salt')
             if client_kdf_salt:
                 # Client derives the symmetric key using the same secret and salt as the server
-                # In a real scenario, the client would have stored their TOTP secret securely.
-                # For this academic project, we use client_totp_secret if it was obtained from registration.
                 client_totp_secret = data.get('user_totp_secret')
                 if client_totp_secret:
                     client_derived_key = CryptoUtils.derive_symmetric_key(
@@ -137,8 +127,7 @@ def main_menu():
         print("1. Register User")
         print("2. Authenticate User (3FA)")
         print("3. Send Encrypted Message")
-        print("4. Logout")
-        print("5. Exit")
+        print("4. Exit")
         choice = input("Enter your choice: ")
 
         if choice == '1':
@@ -148,8 +137,6 @@ def main_menu():
         elif choice == '3':
             send_encrypted_message()
         elif choice == '4':
-            logout()
-        elif choice == '5':
             print("Exiting client. Goodbye!")
             break
         else:
